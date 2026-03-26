@@ -1,6 +1,5 @@
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -8,102 +7,47 @@ import java.util.List;
 
 public class SmartEmailFilterUI extends JFrame {
 
-    private JTextField senderField, subjectField, contentField;
-    private JTextArea outputArea;
-    private EmailManager manager;
+    JTextField senderField, subjectField, contentField;
+    JTextArea outputArea;
+    EmailManager manager;
 
     public SmartEmailFilterUI() {
-        manager = new EmailManager();
-        initUI();
-    }
 
-    private void initUI() {
+        manager = new EmailManager();
 
         setTitle("Smart Email Filtering System");
-        setSize(700,550);
+        setSize(600,500);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
+        setLayout(new FlowLayout());
 
-        JPanel mainPanel = new JPanel();
-        mainPanel.setBackground(new Color(240, 248, 255)); // light blue
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-        mainPanel.setBorder(new EmptyBorder(20,20,20,20));
+        // Fields
+        add(new JLabel("Sender"));
+        senderField = new JTextField(20);
+        add(senderField);
 
-        // ===== Title =====
-        JLabel title = new JLabel("Smart Email Filter", JLabel.CENTER);
-        title.setFont(new Font("Arial", Font.BOLD, 26));
-        title.setForeground(new Color(25, 25, 112)); // dark blue
-        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+        add(new JLabel("Subject"));
+        subjectField = new JTextField(20);
+        add(subjectField);
 
-        mainPanel.add(title);
-        mainPanel.add(Box.createVerticalStrut(20));
+        add(new JLabel("Content"));
+        contentField = new JTextField(20);
+        add(contentField);
 
-        // ===== Input Panel =====
-        JPanel inputPanel = new JPanel(new GridLayout(3,2,10,10));
-        inputPanel.setBackground(new Color(224, 255, 255)); // cyan
+        // Buttons
+        JButton btn = new JButton("Classify");
+        add(btn);
 
-        senderField = new JTextField();
-        subjectField = new JTextField();
-        contentField = new JTextField();
-
-        inputPanel.add(new JLabel("Sender:"));
-        inputPanel.add(senderField);
-
-        inputPanel.add(new JLabel("Subject:"));
-        inputPanel.add(subjectField);
-
-        inputPanel.add(new JLabel("Content:"));
-        inputPanel.add(contentField);
-
-        mainPanel.add(inputPanel);
-        mainPanel.add(Box.createVerticalStrut(20));
-
-        // ===== Buttons =====
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setBackground(new Color(240, 248, 255));
-
-        JButton classifyBtn = new JButton("Classify Email");
-        JButton showBtn = new JButton("Show Folders");
-        JButton clearBtn = new JButton("Clear");
-
-        // Button colors
-        classifyBtn.setBackground(new Color(60, 179, 113)); // green
-        classifyBtn.setForeground(Color.WHITE);
-
-        showBtn.setBackground(new Color(70, 130, 180)); // blue
-        showBtn.setForeground(Color.WHITE);
-
-        clearBtn.setBackground(new Color(220, 20, 60)); // red
-        clearBtn.setForeground(Color.WHITE);
-
-        buttonPanel.add(classifyBtn);
-        buttonPanel.add(showBtn);
-        buttonPanel.add(clearBtn);
-
-        mainPanel.add(buttonPanel);
-        mainPanel.add(Box.createVerticalStrut(20));
-
-        // ===== Output Area =====
+        // Output
         outputArea = new JTextArea(10,40);
-        outputArea.setEditable(false);
-        outputArea.setBackground(new Color(255, 250, 240)); // light cream
-        outputArea.setFont(new Font("Consolas", Font.PLAIN, 14));
+        add(new JScrollPane(outputArea));
 
-        JScrollPane scroll = new JScrollPane(outputArea);
-
-        mainPanel.add(scroll);
-
-        add(mainPanel);
-
-        // ===== Actions =====
-
-        classifyBtn.addActionListener(e -> classifyEmail());
-        showBtn.addActionListener(e -> showFolders());
-        clearBtn.addActionListener(e -> clearFields());
+        // Button action
+        btn.addActionListener(e -> classifyEmail());
 
         setVisible(true);
     }
 
+    // ✅ FIXED METHOD
     private void classifyEmail() {
 
         String sender = senderField.getText();
@@ -111,32 +55,18 @@ public class SmartEmailFilterUI extends JFrame {
         String content = contentField.getText();
 
         if(sender.isEmpty() && subject.isEmpty() && content.isEmpty()){
-            JOptionPane.showMessageDialog(this,"Enter email details!");
+            JOptionPane.showMessageDialog(this, "Enter email details!");
             return;
         }
 
-        Email email = new Email(sender,subject,content);
+        Email email = new Email(sender, subject, content);
         String folder = manager.classifyEmail(email);
 
-        outputArea.append("📧 " + sender + "\n");
-        outputArea.append("📌 " + subject + "\n");
-        outputArea.append("➡ Folder: " + folder + "\n\n");
-    }
-
-    private void showFolders() {
-        outputArea.append("\n=== Folder Contents ===\n");
-        manager.showFolders(outputArea);
-    }
-
-    private void clearFields() {
-        senderField.setText("");
-        subjectField.setText("");
-        contentField.setText("");
-        outputArea.setText("");
+        outputArea.append("Result: " + folder + "\n");
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new SmartEmailFilterUI());
+        new SmartEmailFilterUI();
     }
 }
 
@@ -144,46 +74,33 @@ public class SmartEmailFilterUI extends JFrame {
 class Email {
     String sender, subject, content;
 
-    public Email(String sender, String subject, String content) {
-        this.sender = sender;
-        this.subject = subject;
-        this.content = content;
-    }
-
-    public String toString() {
-        return sender + " | " + subject;
+    public Email(String s, String sub, String c){
+        sender = s;
+        subject = sub;
+        content = c;
     }
 }
 
-// ===== EmailManager =====
+// ===== Manager =====
 class EmailManager {
 
-    private List<String> inbox = new ArrayList<>();
-    private List<String> spam = new ArrayList<>();
-    private List<String> work = new ArrayList<>();
+    List<String> inbox = new ArrayList<>();
+    List<String> spam = new ArrayList<>();
 
-    public String classifyEmail(Email email) {
+    public String classifyEmail(Email e){
 
-        String text = (email.sender + " " + email.subject + " " + email.content).toLowerCase();
+        String text = (e.sender + e.subject + e.content).toLowerCase();
 
         if(text.contains("offer") || text.contains("discount")){
-            spam.add(email.toString());
+            spam.add(e.sender);
             return "Spam";
         }
         else if(text.contains("meeting") || text.contains("project")){
-            work.add(email.toString());
             return "Work";
         }
         else{
-            inbox.add(email.toString());
+            inbox.add(e.sender);
             return "Inbox";
         }
-    }
-
-    public void showFolders(JTextArea area){
-
-        area.append("Inbox: " + inbox + "\n");
-        area.append("Work: " + work + "\n");
-        area.append("Spam: " + spam + "\n");
     }
 }
